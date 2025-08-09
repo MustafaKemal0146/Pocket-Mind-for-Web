@@ -8,9 +8,6 @@
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=24&duration=3000&pause=1000&color=FFFFFF&center=true&vCenter=true&width=900&lines=Windows+i%C3%A7in+AI+Sohbet+Uygulamas%C4%B1;Ollama+%C3%BCzerinden+uzak+ba%C4%9Flant%C4%B1;IP+%2F+Port+%2F+Model+se%C3%A7imi;Modern+%26+Siyah+Tema+Aray%C3%BCz" alt="Typing SVG" />
 
-## 🖼️ Sistem İçi Görsel
-
-<img src="images/system.gif" alt="PocketMind Sistem Görseli" width="800" />
 
 </div>
 
@@ -25,6 +22,13 @@
 [![Buy Me A Coffee](https://img.shields.io/badge/%E2%98%95_Buy_me_a_coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/ismustafakt)
 
 </div>
+
+
+## 🖼️ Sistem İçi Görsel
+
+<img src="images/system.gif" alt="PocketMind Sistem Görseli" width="800" />
+
+
 
 ## 🎯 Ne Sunuyor?
 
