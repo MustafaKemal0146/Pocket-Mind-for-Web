@@ -1,0 +1,51 @@
+# --- Node & general ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# --- Environment files ---
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# --- Build outputs & caches ---
+dist/
+build/
+coverage/
+.tmp/
+.temp/
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+
+# --- Editor/OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- App specific paths ---
+backend/node_modules/
+frontend/node_modules/
+backend/dist/
+frontend/dist/
+
+# --- Vite cache (usually inside node_modules) ---
+**/node_modules/.vite/
+
+# --- Hosting/monorepo helpers ---
+.vercel/
+.netlify/
+.turbo/
+
+

@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Minimal Windows benzeri görünüm dokunuşları */
+.window {
+  @apply border rounded-md shadow-sm;
+}
+.window-titlebar {
+  @apply px-4 py-2 border-b text-sm font-semibold;
+}
+.window-body {
+  @apply p-4;
+}
+.input {
+  @apply border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-white/10 focus:border-white/40;
+}
+.btn {
+  @apply inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:opacity-90 active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-primary {
+  @apply border-black bg-black text-white hover:bg-neutral-800;
+}
+.chat-bubble-user {
+  @apply self-end rounded-2xl px-4 py-2 max-w-[80%];
+}
+.chat-bubble-assistant {
+  @apply self-start rounded-2xl px-4 py-2 max-w-[80%];
+}
+
+
