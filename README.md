@@ -2,7 +2,7 @@
 
 <img src="PocketMindForWeb.png" alt="PocketMind Logo" width="200" />
 
-<h1>🪟 PocketMind for Windows</h1>
+<h1>🪟 PocketMind for Web</h1>
 
 <strong>🚀 Windows üzerinde çalışan, Ollama destekli yapay zekâ sohbet uygulaması</strong>
 
