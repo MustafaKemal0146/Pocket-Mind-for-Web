@@ -2,12 +2,15 @@
 
 <img src="PocketMindForWeb.png" alt="PocketMind Logo" width="200" />
 
-<h1>🪟 PocketMind for Web</h1>
+<h1>🪟 PocketMind for Windows</h1>
 
 <strong>🚀 Windows üzerinde çalışan, Ollama destekli yapay zekâ sohbet uygulaması</strong>
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=24&duration=3000&pause=1000&color=FFFFFF&center=true&vCenter=true&width=900&lines=Windows+i%C3%A7in+AI+Sohbet+Uygulamas%C4%B1;Ollama+%C3%BCzerinden+uzak+ba%C4%9Flant%C4%B1;IP+%2F+Port+%2F+Model+se%C3%A7imi;Modern+%26+Siyah+Tema+Aray%C3%BCz" alt="Typing SVG" />
 
+## 🖼️ Sistem İçi Görsel
+
+<img src="images/system.gif" alt="PocketMind Sistem Görseli" width="800" />
 
 </div>
 
@@ -23,28 +26,38 @@
 
 </div>
 
-
-## 🖼️ Sistem İçi Görsel
-
-<img src="images/system.gif" alt="PocketMind Sistem Görseli" width="800" />
-
-
-
 ## 🎯 Ne Sunuyor?
 
 Windows 10+ sistemlerde çalışan, uzak bir Ollama sunucusuna (`http://<ip>:<port>`) bağlanıp sohbet edebileceğiniz, modern ve siyah temalı bir arayüz. Backend varsayılan olarak 4646 portunda çalışır.
 
+### 💬 Normal Sohbet Modu
 - IP / Port / Model girerek sohbet başlatma
 - Sohbet geçmişi (oturum içinde) tutulur
 - Modelleri `/api/tags` ile listeleyebilme (opsiyonel)
 - Minimal, siyah temalı ve masaüstü hissiyatı veren arayüz
 
+### ⚔️ Tartışma Modu (YENİ!)
+- **İki AI Tartışması**: Farklı AI modelleri birbirleriyle tartışabilir
+- **Sıralı Konuşma**: AI'lar teker teker, birbirlerini dinleyerek konuşur
+- **Akıllı Kontext**: Her AI önceki konuşmaları hatırlar ve ona göre cevap verir
+- **Rastgele Konular**: 50+ hazır tartışma konusu arasından rastgele seçim
+- **Sonsuz Mod**: İstediğiniz kadar uzun tartışmalar
+- **Force Stop**: Tartışmayı istediğiniz anda durdurabilme
+- **Animasyonlu Geçişler**: Smooth mod değiştirme animasyonları
+- **Renkli Mesajlar**: AI-1 (mavi) ve AI-2 (kırmızı) renk kodlaması
+
 ## 🧩 Mimari
 
 - `backend/` – Node.js + Express
-  - `POST /api/chat` → Ollama `/api/generate` proxy (body: `{ ip, port, model, prompt }`)
-  - `POST /api/tags` → Ollama `/api/tags` proxy (opsiyonel)
-- `frontend/` – React + Vite + TailwindCSS (siyah tema)
+  - `POST /api/chat` → Normal sohbet için Ollama proxy
+  - `POST /api/tags` → Model listesi için Ollama proxy
+  - `POST /api/debate/start` → Tartışma başlatma (YENİ!)
+  - `POST /api/debate/next` → Tartışma devam ettirme (YENİ!)
+  - `POST /api/debate/stop` → Tartışma durdurma (YENİ!)
+  - `GET /api/debate/history/:id` → Tartışma geçmişi (YENİ!)
+- `frontend/` – React + Vite + TailwindCSS + Framer Motion
+  - Siyah tema ve Ethereal Shadows animasyonları
+  - Responsive tasarım ve smooth geçişler
 
 ## 🖥️ Gereksinimler
 
@@ -133,16 +146,54 @@ npm run build
 
 ## 🧪 Kullanım
 
-1) Arayüzde Sunucu IP, Port ve Model girin (örn. `127.0.0.1` / `11434` / `mistral:latest`).
-2) Mesajınızı yazıp gönderin. Backend, Ollama'ya `{ model, prompt, stream: false }` ile isteği iletir ve yanıtı ekrana döndürür.
-3) "Modelleri Getir" ile `/api/tags` üzerinden modelleri listeleyebilirsiniz.
+### Normal Sohbet Modu
+1) Arayüzde Sunucu IP, Port ve Model girin (örn. `127.0.0.1` / `11434` / `mistral:latest`)
+2) Mesajınızı yazıp gönderin
+3) "Modelleri Getir" ile mevcut modelleri listeleyebilirsiniz
+
+### Tartışma Modu
+1) **"⚔️ Tartışma Modu"** düğmesine tıklayın
+2) **AI-1 Model** ve **AI-2 Model** seçin (aynı veya farklı modeller olabilir)
+3) **Maksimum Tur** belirleyin veya **"♾️ Sonsuz"** modunu aktifleştirin
+4) İsteğe bağlı olarak:
+   - **"🎲 Rastgele Konu"** ile otomatik konu seçimi
+   - Manuel olarak kendi konunuzu yazın
+5) **"🚀 Tartışmayı Başlat"** ile başlatın
+6) AI'lar otomatik olarak sırayla tartışmaya başlar
+7) **"⏹️ Force Stop"** ile istediğiniz anda durdurun
 
 ## 🎨 UI ve Tema
 
-- Siyah tema varsayılan olarak etkinleştirilmiştir.
-- Arka planda dinamik bir gölge/şekil efekti (Etheral Shadows) kullanabilirsiniz.
+- **Siyah Tema**: Varsayılan olarak etkinleştirilmiş modern karanlık tema
+- **Ethereal Shadows**: Arka planda dinamik gölge/şekil efektleri
+- **Animasyon Kontrolü**: "🎭 Anim Kapat/Aç" ile arka plan animasyonlarını kontrol edin
+- **Responsive Tasarım**: Farklı ekran boyutlarına uyumlu
+- **Smooth Geçişler**: Mod değiştirirken akıcı animasyonlar
+- **Renkli Kodlama**: Tartışma modunda AI'lar için farklı renkler (mavi/kırmızı)
 
-## 👤 Yazan
+## 🆕 Yeni Özellikler (v2.0)
+
+### ⚔️ Tartışma Modu
+- **Çift AI Sistemi**: İki farklı AI modeli birbirleriyle tartışabilir
+- **Backend Kontrollü**: Güvenilir tartışma yönetimi için backend tabanlı sistem
+- **Akıllı Konuşma**: AI'lar birbirlerinin mesajlarını hatırlar ve ona göre cevap verir
+- **50+ Rastgele Konu**: Çeşitli tartışma konuları arasından otomatik seçim
+- **Sonsuz Mod**: Sınırsız tartışma imkanı
+- **Gerçek Zamanlı Durdurma**: Force stop ile anında müdahale
+
+### 🎭 Animasyon Sistemi
+- **Framer Motion**: Profesyonel animasyon kütüphanesi entegrasyonu
+- **Smooth Geçişler**: Mod değiştirirken akıcı animasyonlar
+- **Ethereal Shadows**: Arka plan için dinamik efektler
+- **Animasyon Kontrolü**: Kullanıcı tercihi ile açma/kapama
+
+### 🔧 Teknik İyileştirmeler
+- **Backend API Genişletildi**: Tartışma yönetimi için yeni endpoint'ler
+- **State Yönetimi**: Daha güvenilir durum kontrolü
+- **Error Handling**: Gelişmiş hata yönetimi ve kullanıcı bildirimleri
+- **Debug Sistemi**: Geliştirici dostu log sistemi
+
+## 👤 Devoloper
 
 **Mustafa Kemal ÇINGIL**
 - LinkedIn: [mustafakemalcingil](https://www.linkedin.com/in/mustafakemalcingil/)
