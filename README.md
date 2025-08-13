@@ -14,11 +14,11 @@
 
 ## 🎥 Tartışma Modu Önizleme
 
-İki yapay zekanın birbirleriyle gerçek zamanlı tartışmasını izleyin! Aşağıdaki videoda tartışma modunun nasıl çalıştığını görebilirsiniz:
+İki yapay zekanın birbirleriyle gerçek zamanlı tartışmasını izleyin! Videoya tıklayarak tartışma modunun nasıl çalıştığını görebilirsiniz:
 
-<div style="position:relative; width:100%; height:0px; padding-bottom:56.250%">
-  <iframe allow="fullscreen" allowfullscreen height="100%" src="https://streamable.com/e/a23aw7?" width="100%" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;"></iframe>
-</div>
+**🎬 [Tartışma Modu Demo Videosunu İzle →](https://streamable.com/a23aw7)**
+
+> *Video'da iki AI'ın gerçek zamanlı tartışması, rastgele konu seçimi ve tüm özellikler gösterilmektedir.*
 
 **Videoda Gösterilen Özellikler:**
 - ⚔️ İki farklı AI modelinin tartışması
