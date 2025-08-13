@@ -12,6 +12,23 @@
 
 <img src="images/system.gif" alt="PocketMind Sistem Görseli" width="800" />
 
+## 🎥 Tartışma Modu Önizleme
+
+İki yapay zekanın birbirleriyle gerçek zamanlı tartışmasını izleyin! Aşağıdaki videoda tartışma modunun nasıl çalıştığını görebilirsiniz:
+
+<video width="800" controls>
+  <source src="videos/tartışma_mode.mp4" type="video/mp4">
+  Tarayıcınız video etiketini desteklemiyor.
+</video>
+
+**Videoda Gösterilen Özellikler:**
+- ⚔️ İki farklı AI modelinin tartışması
+- 🎲 Rastgele konu seçimi
+- 💬 Sıralı ve akıllı konuşma sistemi
+- ♾️ Sonsuz mod seçeneği
+- ⏹️ Force stop özelliği
+- 🎨 Renkli mesaj kodlaması (AI-1: Mavi, AI-2: Kırmızı)
+
 </div>
 
 <div align="center">
