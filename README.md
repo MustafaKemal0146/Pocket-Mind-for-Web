@@ -16,10 +16,9 @@
 
 İki yapay zekanın birbirleriyle gerçek zamanlı tartışmasını izleyin! Aşağıdaki videoda tartışma modunun nasıl çalıştığını görebilirsiniz:
 
-<video width="800" controls>
-  <source src="videos/tartışma_mode.mp4" type="video/mp4">
-  Tarayıcınız video etiketini desteklemiyor.
-</video>
+<div style="position:relative; width:100%; height:0px; padding-bottom:56.250%">
+  <iframe allow="fullscreen" allowfullscreen height="100%" src="https://streamable.com/e/a23aw7?" width="100%" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;"></iframe>
+</div>
 
 **Videoda Gösterilen Özellikler:**
 - ⚔️ İki farklı AI modelinin tartışması
