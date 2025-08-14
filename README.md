@@ -49,13 +49,18 @@
 Windows 10+ sistemlerde çalışan, uzak bir Ollama sunucusuna (`http://<ip>:<port>`) bağlanıp sohbet edebileceğiniz, modern ve siyah temalı bir arayüz. Backend varsayılan olarak 4646 portunda çalışır.
 
 ### 💬 Normal Sohbet Modu
-- IP / Port / Model girerek sohbet başlatma
+- **🖥️ Offline Modeller**: Ollama ile yerel AI modelleri
+- **🌐 Online API Desteği**: Google AI Studio, OpenAI, Anthropic Claude
+- **🔄 Hibrit Sistem**: Online ve offline modelleri aynı arayüzde
+- **🔑 API Key Yönetimi**: Güvenli API anahtarı girişi
+- **📊 Model Çeşitliliği**: Gemini, GPT, Claude ve Ollama modelleri
 - Sohbet geçmişi (oturum içinde) tutulur
-- Modelleri `/api/tags` ile listeleyebilme (opsiyonel)
 - Minimal, siyah temalı ve masaüstü hissiyatı veren arayüz
 
 ### ⚔️ Tartışma Modu (YENİ!)
 - **İki AI Tartışması**: Farklı AI modelleri birbirleriyle tartışabilir
+- **🌐 Online vs Offline**: Gemini vs GPT-4, Claude vs Ollama gibi hibrit tartışmalar
+- **🤖 Provider Çeşitliliği**: Google, OpenAI, Anthropic ve Ollama karışımı
 - **Sıralı Konuşma**: AI'lar teker teker, birbirlerini dinleyerek konuşur
 - **Akıllı Kontext**: Her AI önceki konuşmaları hatırlar ve ona göre cevap verir
 - **Rastgele Konular**: 50+ hazır tartışma konusu arasından rastgele seçim
@@ -67,13 +72,16 @@ Windows 10+ sistemlerde çalışan, uzak bir Ollama sunucusuna (`http://<ip>:<po
 ## 🧩 Mimari
 
 - `backend/` – Node.js + Express
-  - `POST /api/chat` → Normal sohbet için Ollama proxy
+  - `POST /api/chat` → **Hibrit sohbet sistemi** (Ollama + Online API'ler)
   - `POST /api/tags` → Model listesi için Ollama proxy
-  - `POST /api/debate/start` → Tartışma başlatma (YENİ!)
+  - `POST /api/online-models` → Online provider model listesi (YENİ!)
+  - `POST /api/debate/start` → **Hibrit tartışma başlatma** (YENİ!)
   - `POST /api/debate/next` → Tartışma devam ettirme (YENİ!)
   - `POST /api/debate/stop` → Tartışma durdurma (YENİ!)
   - `GET /api/debate/history/:id` → Tartışma geçmişi (YENİ!)
 - `frontend/` – React + Vite + TailwindCSS + Framer Motion
+  - **Provider Seçimi**: Online/Offline mod değiştirme
+  - **API Key Yönetimi**: Güvenli anahtar girişi
   - Siyah tema ve Ethereal Shadows animasyonları
   - Responsive tasarım ve smooth geçişler
 
@@ -165,13 +173,20 @@ npm run build
 ## 🧪 Kullanım
 
 ### Normal Sohbet Modu
-1) Arayüzde Sunucu IP, Port ve Model girin (örn. `127.0.0.1` / `11434` / `mistral:latest`)
+1) **Provider Seçimi** yapın:
+   - **🖥️ Ollama (Offline)**: IP, Port ve yerel model girin
+   - **🌐 Google AI Studio**: API Key girin, Gemini modeli seçin
+   - **🤖 OpenAI**: API Key girin, GPT modeli seçin  
+   - **🧠 Anthropic**: API Key girin, Claude modeli seçin
 2) Mesajınızı yazıp gönderin
-3) "Modelleri Getir" ile mevcut modelleri listeleyebilirsiniz
+3) "Modelleri Getir" ile Ollama modellerini listeleyebilirsiniz
 
 ### Tartışma Modu
 1) **"⚔️ Tartışma Modu"** düğmesine tıklayın
-2) **AI-1 Model** ve **AI-2 Model** seçin (aynı veya farklı modeller olabilir)
+2) **AI-1** ve **AI-2** için ayrı ayrı:
+   - **Provider seçimi** (Ollama, Google, OpenAI, Anthropic)
+   - **API Key girişi** (online provider'lar için)
+   - **Model seçimi** (provider'a göre model listesi)
 3) **Maksimum Tur** belirleyin veya **"♾️ Sonsuz"** modunu aktifleştirin
 4) İsteğe bağlı olarak:
    - **"🎲 Rastgele Konu"** ile otomatik konu seçimi
@@ -179,6 +194,11 @@ npm run build
 5) **"🚀 Tartışmayı Başlat"** ile başlatın
 6) AI'lar otomatik olarak sırayla tartışmaya başlar
 7) **"⏹️ Force Stop"** ile istediğiniz anda durdurun
+
+**🔥 Hibrit Tartışma Örnekleri:**
+- Gemini 2.5 Pro vs GPT-4 Turbo
+- Claude 3 Opus vs Ollama Llama
+- Online AI vs Offline AI karşılaştırması
 
 ## 🎨 UI ve Tema
 
@@ -189,7 +209,37 @@ npm run build
 - **Smooth Geçişler**: Mod değiştirirken akıcı animasyonlar
 - **Renkli Kodlama**: Tartışma modunda AI'lar için farklı renkler (mavi/kırmızı)
 
-## 🆕 Yeni Özellikler (v2.0)
+## 🆕 Yeni Özellikler (v3.0)
+
+### 🌐 Online API Desteği (YENİ!)
+- **Google AI Studio**: Gemini 1.5/2.0/2.5 serisi, Gemma modelleri
+- **OpenAI**: GPT-4, GPT-3.5 Turbo, GPT-4 Turbo
+- **Anthropic Claude**: Claude 3.5 Sonnet v2, Claude 3.5 Haiku, Claude 3 Opus
+- **Hibrit Sistem**: Online ve offline modelleri aynı arayüzde
+- **API Key Yönetimi**: Güvenli ve kullanıcı dostu anahtar girişi
+- **Provider Seçimi**: Dropdown ile kolay geçiş
+
+### 🤖 Desteklenen Modeller
+**Google AI Studio:**
+- Gemini 1.5 Flash, Flash-002, Flash-8B
+- Gemini 1.5 Pro
+- Gemini 2.0 Flash, 2.0 Pro Exp
+- Gemini 2.5 Flash, 2.5 Pro
+- Gemma 3 27B IT
+
+**OpenAI:**
+- GPT-4, GPT-4 Turbo
+- GPT-3.5 Turbo
+
+**Anthropic Claude:**
+- Claude 3.5 Sonnet v2, Claude 3.5 Sonnet v1
+- Claude 3.5 Haiku (Hızlı)
+- Claude 3 Opus (En güçlü), Claude 3 Sonnet, Claude 3 Haiku
+
+**Ollama:**
+- Tüm yerel modeller (Llama, Mistral, vb.)
+
+## 🆕 Önceki Özellikler (v2.0)
 
 ### ⚔️ Tartışma Modu
 - **Çift AI Sistemi**: İki farklı AI modeli birbirleriyle tartışabilir
@@ -231,6 +281,3 @@ Eğer bu proje işinizi kolaylaştırdıysa:
 <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=16&duration=4000&pause=1000&color=FFFFFF&center=true&vCenter=true&width=600&lines=Ollama+%7C+Windows+%7C+React;Siyah+Tema+%26+Modern+UI;Te%C5%9Fekk%C3%BCrler!" alt="Footer Typing SVG" />
 
 </div>
-
-
-
