@@ -12,17 +12,24 @@ export default function App() {
   const [serverPort, setServerPort] = useState('11434')
   const [model, setModel] = useState('')
   const [availableModels, setAvailableModels] = useState([])
+  const [chatProvider, setChatProvider] = useState('ollama')
+  const [chatApiKey, setChatApiKey] = useState('')
 
   const [prompt, setPrompt] = useState('')
   const [chatHistory, setChatHistory] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [showAnimation, setShowAnimation] = useState(true)
-  
+
   // Tartışma Modu State'leri
   const [isDebateMode, setIsDebateMode] = useState(false)
   const [ai1Model, setAi1Model] = useState('')
   const [ai2Model, setAi2Model] = useState('')
+  const [ai1Provider, setAi1Provider] = useState('ollama')
+  const [ai2Provider, setAi2Provider] = useState('ollama')
+  const [ai1ApiKey, setAi1ApiKey] = useState('')
+  const [ai2ApiKey, setAi2ApiKey] = useState('')
+  const [onlineModels, setOnlineModels] = useState({})
   const [debateHistory, setDebateHistory] = useState([])
   const [isDebateRunning, setIsDebateRunning] = useState(false)
   const [debateRounds, setDebateRounds] = useState(0)
@@ -30,7 +37,7 @@ export default function App() {
   const [isInfiniteMode, setIsInfiniteMode] = useState(false)
   const [debateTimeoutId, setDebateTimeoutId] = useState(null)
   const [currentDebateId, setCurrentDebateId] = useState(null)
-  
+
   const endRef = useRef(null)
   const connectingTimeoutRef = useRef(null)
 
@@ -63,77 +70,46 @@ export default function App() {
     }
   }, [serverIp, serverPort, model])
 
-  const handleSend = useCallback(async () => {
-    if (!canSend) return
-    const activeModel = model || availableModels[0] || ''
-    const userMessage = { role: 'user', content: prompt }
-    setChatHistory((prev) => [...prev, userMessage])
-    setPrompt('')
-    setIsLoading(true)
 
-    try {
-      const res = await axios.post(`${BACKEND_BASE_URL}/api/chat`, {
-        ip: serverIp,
-        port: serverPort,
-        model: activeModel,
-        prompt: userMessage.content,
-      })
-      const assistantText = res?.data?.response || ''
-      setChatHistory((prev) => [...prev, { role: 'assistant', content: assistantText }])
-      setTimeout(scrollToBottom, 50)
-    } catch (error) {
-      const err = error?.response?.data?.error || error.message
-      setChatHistory((prev) => [...prev, { role: 'assistant', content: `Hata: ${err}` }])
-      setTimeout(scrollToBottom, 50)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [serverIp, serverPort, model, availableModels, prompt, canSend])
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      handleSend()
-    }
-  }
 
   // Yeni Backend API ile Tartışma Fonksiyonları
   const continueDebate = useCallback(async (debateId) => {
     console.log('💬 continueDebate çağrıldı, debateId:', debateId);
-    
+
     if (!debateId) {
       console.log('❌ debateId yok!');
       return;
     }
-    
+
     try {
       console.log('📡 Backend\'e next isteği gönderiliyor...');
       const res = await axios.post(`${BACKEND_BASE_URL}/api/debate/next`, {
         debateId: debateId
       })
-      
+
       console.log('✅ Backend yanıtı:', res.data);
-      
+
       if (res.data.finished || res.data.isFinished) {
         setIsDebateRunning(false)
         setDebateTimeoutId(null)
         setCurrentDebateId(null)
         return
       }
-      
+
       const newMessage = res.data.message
       setDebateHistory(prev => [...prev, newMessage])
       setDebateRounds(res.data.currentRound)
-      
+
       // Scroll to bottom
       setTimeout(scrollToBottom, 100)
-      
+
       // Devam et
       console.log('⏰ Sonraki mesaj için timeout başlatılıyor...');
       const timeoutId = setTimeout(() => {
         continueDebate(debateId)
       }, 3000) // 3 saniye bekle
       setDebateTimeoutId(timeoutId)
-      
+
     } catch (error) {
       console.error('❌ Tartışma hatası:', error)
       setIsDebateRunning(false)
@@ -149,7 +125,7 @@ export default function App() {
       clearTimeout(debateTimeoutId)
       setDebateTimeoutId(null)
     }
-    
+
     if (currentDebateId) {
       try {
         await axios.post(`${BACKEND_BASE_URL}/api/debate/stop`, {
@@ -163,49 +139,70 @@ export default function App() {
   }, [debateTimeoutId, currentDebateId])
 
   const startDebate = useCallback(async (initialTopic) => {
-    console.log('🚀 Tartışma başlatılıyor...', { ai1Model, ai2Model, serverIp, serverPort });
-    
+    console.log('🚀 Tartışma başlatılıyor...', { ai1Model, ai2Model, ai1Provider, ai2Provider });
+
     if (!ai1Model || !ai2Model) {
       alert('Lütfen her iki AI için de model seçin!')
       return
     }
     
+    // Online provider'lar için API key kontrolü
+    if (ai1Provider !== 'ollama' && !ai1ApiKey) {
+      alert('AI-1 için API Key girin!')
+      return
+    }
+    
+    if (ai2Provider !== 'ollama' && !ai2ApiKey) {
+      alert('AI-2 için API Key girin!')
+      return
+    }
+    
+    // Ollama provider'lar için IP/Port kontrolü
+    if ((ai1Provider === 'ollama' || ai2Provider === 'ollama') && (!serverIp || !serverPort)) {
+      alert('Ollama kullanımı için IP ve Port girin!')
+      return
+    }
+
     // Önceki tartışmayı durdur
     if (currentDebateId) {
       await stopDebate()
     }
-    
+
     try {
       setIsDebateRunning(true)
       setDebateRounds(0)
       setDebateHistory([])
-      
+
       const topic = initialTopic || "Yapay zekanın geleceği hakkında tartışalım"
       console.log('📋 Konu:', topic);
-      
+
       // Backend'de tartışma başlat
       const res = await axios.post(`${BACKEND_BASE_URL}/api/debate/start`, {
         ip: serverIp,
         port: serverPort,
         ai1Model,
         ai2Model,
+        ai1Provider,
+        ai2Provider,
+        ai1ApiKey,
+        ai2ApiKey,
         topic,
         maxRounds: maxDebateRounds,
         isInfinite: isInfiniteMode
       })
-      
+
       console.log('✅ Backend yanıtı:', res.data);
       const debateId = res.data.debateId
       setCurrentDebateId(debateId)
-      
+
       // İlk sistem mesajını ekle
-      const initialMessage = { 
-        role: 'system', 
+      const initialMessage = {
+        role: 'system',
         content: `Tartışma Konusu: ${topic}`,
         speaker: 'system'
       }
       setDebateHistory([initialMessage])
-      
+
       // İlk mesajı başlat
       console.log('⏰ İlk mesaj için timeout başlatılıyor...');
       const timeoutId = setTimeout(() => {
@@ -213,7 +210,7 @@ export default function App() {
         continueDebate(debateId)
       }, 1000)
       setDebateTimeoutId(timeoutId)
-      
+
     } catch (error) {
       console.error('❌ Tartışma başlatma hatası:', error)
       setIsDebateRunning(false)
@@ -293,15 +290,15 @@ export default function App() {
       <motion.div
         className="window mx-auto bg-black/40 backdrop-blur border-neutral-700 text-neutral-200"
         initial={{ opacity: 0, y: 24, scale: 0.98 }}
-        animate={{ 
-          opacity: 1, 
-          y: 0, 
+        animate={{
+          opacity: 1,
+          y: 0,
           scale: 1,
           maxWidth: isDebateMode ? '1280px' : '1024px',
           width: '100%'
         }}
-        transition={{ 
-          duration: 0.8, 
+        transition={{
+          duration: 0.8,
           ease: [0.25, 0.46, 0.45, 0.94],
           maxWidth: { duration: 0.6, ease: 'easeInOut' }
         }}
@@ -310,7 +307,7 @@ export default function App() {
           <span><TypewriterTitle /></span>
           <div className="text-xs text-neutral-400 flex items-center gap-2">
             <span>Backend: http://localhost:4646</span>
-            <button 
+            <button
               onClick={() => setShowAnimation(!showAnimation)}
               className="px-2 py-1 text-xs bg-black/40 hover:bg-black/60 border border-neutral-700 rounded transition-colors"
               title={showAnimation ? 'Animasyonu Kapat' : 'Animasyonu Aç'}
@@ -336,21 +333,73 @@ export default function App() {
               <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={serverPort} onChange={(e) => { setServerPort(e.target.value); triggerConnecting(); }} placeholder="11434" />
             </div>
 
-            {availableModels.length > 0 ? (
-              <div>
-                <label className="block text-xs mb-1">Model</label>
-                <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={model} onChange={(e) => { setModel(e.target.value); }}>
-                  {availableModels.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
+            <div>
+              <label className="block text-xs mb-1">Provider</label>
+              <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100 mb-2" value={chatProvider} onChange={(e) => setChatProvider(e.target.value)}>
+                <option value="ollama">🖥️ Ollama (Offline)</option>
+                <option value="google">🌐 Google AI Studio</option>
+                <option value="openai">🤖 OpenAI</option>
+                <option value="anthropic">🧠 Anthropic Claude</option>
+              </select>
+              
+              {chatProvider !== 'ollama' && (
+                <input 
+                  className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500 mb-2" 
+                  type="password"
+                  value={chatApiKey} 
+                  onChange={(e) => setChatApiKey(e.target.value)} 
+                  placeholder="API Key girin..." 
+                />
+              )}
+              
+              <label className="block text-xs mb-1">Model</label>
+              {chatProvider === 'ollama' ? (
+                availableModels.length > 0 ? (
+                  <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={model} onChange={(e) => { setModel(e.target.value); }}>
+                    <option value="">Model seçin...</option>
+                    {availableModels.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={model} onChange={(e) => { setModel(e.target.value); }} placeholder="ör: mistral:latest" />
+                )
+              ) : (
+                <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={model} onChange={(e) => setModel(e.target.value)}>
+                  <option value="">Model seçin...</option>
+                  {chatProvider === 'google' && (
+                    <>
+                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                      <option value="gemini-1.5-flash-002">Gemini 1.5 Flash-002</option>
+                      <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B</option>
+                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                      <option value="gemini-2.0-flash">Gemini 2.0 Flash ⚡</option>
+                      <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro Exp 🧪</option>
+                      <option value="gemini-2.5-flash">Gemini 2.5 Flash ⚡</option>
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro 🚀</option>
+                      <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
+                    </>
+                  )}
+                  {chatProvider === 'openai' && (
+                    <>
+                      <option value="gpt-4">GPT-4</option>
+                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                      <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    </>
+                  )}
+                  {chatProvider === 'anthropic' && (
+                    <>
+                      <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet v2 🚀</option>
+                      <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet v1</option>
+                      <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku ⚡</option>
+                      <option value="claude-3-opus-20240229">Claude 3 Opus 💎</option>
+                      <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                      <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                    </>
+                  )}
                 </select>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs mb-1">Model</label>
-                <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={model} onChange={(e) => { setModel(e.target.value); }} placeholder="ör: mistral:latest" />
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="flex gap-2">
               <button className="btn border-neutral-700 text-neutral-100 bg-black/40 hover:bg-black/60" onClick={handleFetchModels} disabled={isLoading}>Modelleri Getir</button>
@@ -358,7 +407,7 @@ export default function App() {
             </div>
 
             <div className="border-t border-neutral-700 pt-3">
-              <motion.button 
+              <motion.button
                 className={`btn w-full ${isDebateMode ? 'bg-red-600/40 border-red-500 hover:bg-red-600/60' : 'bg-purple-600/40 border-purple-500 hover:bg-purple-600/60'} text-white`}
                 onClick={() => setIsDebateMode(!isDebateMode)}
                 whileHover={{ scale: 1.02 }}
@@ -370,53 +419,161 @@ export default function App() {
             </div>
 
             {isDebateMode && (
-              <motion.div 
+              <motion.div
                 className="space-y-3 border-t border-neutral-700 pt-3"
                 initial={{ opacity: 0, height: 0, y: -20 }}
                 animate={{ opacity: 1, height: 'auto', y: 0 }}
                 exit={{ opacity: 0, height: 0, y: -20 }}
-                transition={{ 
-                  duration: 0.5, 
+                transition={{
+                  duration: 0.5,
                   ease: [0.25, 0.46, 0.45, 0.94],
                   height: { duration: 0.4 },
                   opacity: { duration: 0.3, delay: 0.1 }
                 }}
               >
                 <div>
+                  <label className="block text-xs mb-1">AI-1 Provider</label>
+                  <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100 mb-2" value={ai1Provider} onChange={(e) => setAi1Provider(e.target.value)}>
+                    <option value="ollama">🖥️ Ollama (Offline)</option>
+                    <option value="google">🌐 Google AI Studio</option>
+                    <option value="openai">🤖 OpenAI</option>
+                    <option value="anthropic">🧠 Anthropic Claude</option>
+                  </select>
+                  
+                  {ai1Provider !== 'ollama' && (
+                    <input 
+                      className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500 mb-2" 
+                      type="password"
+                      value={ai1ApiKey} 
+                      onChange={(e) => setAi1ApiKey(e.target.value)} 
+                      placeholder="API Key girin..." 
+                    />
+                  )}
+                  
                   <label className="block text-xs mb-1">AI-1 Model</label>
-                  {availableModels.length > 0 ? (
+                  {ai1Provider === 'ollama' ? (
+                    availableModels.length > 0 ? (
+                      <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={ai1Model} onChange={(e) => setAi1Model(e.target.value)}>
+                        <option value="">Model seçin...</option>
+                        {availableModels.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={ai1Model} onChange={(e) => setAi1Model(e.target.value)} placeholder="ör: mistral:latest" />
+                    )
+                  ) : (
                     <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={ai1Model} onChange={(e) => setAi1Model(e.target.value)}>
                       <option value="">Model seçin...</option>
-                      {availableModels.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
+                      {ai1Provider === 'google' && (
+                        <>
+                          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                          <option value="gemini-1.5-flash-002">Gemini 1.5 Flash-002</option>
+                          <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B</option>
+                          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                          <option value="gemini-2.0-flash">Gemini 2.0 Flash ⚡</option>
+                          <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro Exp 🧪</option>
+                          <option value="gemini-2.5-flash">Gemini 2.5 Flash ⚡</option>
+                          <option value="gemini-2.5-pro">Gemini 2.5 Pro 🚀</option>
+                          <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
+                        </>
+                      )}
+                      {ai1Provider === 'openai' && (
+                        <>
+                          <option value="gpt-4">GPT-4</option>
+                          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        </>
+                      )}
+                      {ai1Provider === 'anthropic' && (
+                        <>
+                          <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet v2 🚀</option>
+                          <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet v1</option>
+                          <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku ⚡</option>
+                          <option value="claude-3-opus-20240229">Claude 3 Opus 💎</option>
+                          <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                          <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                        </>
+                      )}
                     </select>
-                  ) : (
-                    <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={ai1Model} onChange={(e) => setAi1Model(e.target.value)} placeholder="ör: mistral:latest" />
                   )}
                 </div>
-                
+
                 <div>
+                  <label className="block text-xs mb-1">AI-2 Provider</label>
+                  <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100 mb-2" value={ai2Provider} onChange={(e) => setAi2Provider(e.target.value)}>
+                    <option value="ollama">🖥️ Ollama (Offline)</option>
+                    <option value="google">🌐 Google AI Studio</option>
+                    <option value="openai">🤖 OpenAI</option>
+                    <option value="anthropic">🧠 Anthropic Claude</option>
+                  </select>
+                  
+                  {ai2Provider !== 'ollama' && (
+                    <input 
+                      className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500 mb-2" 
+                      type="password"
+                      value={ai2ApiKey} 
+                      onChange={(e) => setAi2ApiKey(e.target.value)} 
+                      placeholder="API Key girin..." 
+                    />
+                  )}
+                  
                   <label className="block text-xs mb-1">AI-2 Model</label>
-                  {availableModels.length > 0 ? (
+                  {ai2Provider === 'ollama' ? (
+                    availableModels.length > 0 ? (
+                      <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={ai2Model} onChange={(e) => setAi2Model(e.target.value)}>
+                        <option value="">Model seçin...</option>
+                        {availableModels.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={ai2Model} onChange={(e) => setAi2Model(e.target.value)} placeholder="ör: llama2:latest" />
+                    )
+                  ) : (
                     <select className="input w-full bg-black/30 border-neutral-700 text-neutral-100" value={ai2Model} onChange={(e) => setAi2Model(e.target.value)}>
                       <option value="">Model seçin...</option>
-                      {availableModels.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
+                      {ai2Provider === 'google' && (
+                        <>
+                          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                          <option value="gemini-1.5-flash-002">Gemini 1.5 Flash-002</option>
+                          <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B</option>
+                          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                          <option value="gemini-2.0-flash">Gemini 2.0 Flash ⚡</option>
+                          <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro Exp 🧪</option>
+                          <option value="gemini-2.5-flash">Gemini 2.5 Flash ⚡</option>
+                          <option value="gemini-2.5-pro">Gemini 2.5 Pro 🚀</option>
+                          <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
+                        </>
+                      )}
+                      {ai2Provider === 'openai' && (
+                        <>
+                          <option value="gpt-4">GPT-4</option>
+                          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        </>
+                      )}
+                      {ai2Provider === 'anthropic' && (
+                        <>
+                          <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet v2 🚀</option>
+                          <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet v1</option>
+                          <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku ⚡</option>
+                          <option value="claude-3-opus-20240229">Claude 3 Opus 💎</option>
+                          <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                          <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                        </>
+                      )}
                     </select>
-                  ) : (
-                    <input className="input w-full bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500" value={ai2Model} onChange={(e) => setAi2Model(e.target.value)} placeholder="ör: llama2:latest" />
                   )}
                 </div>
 
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <label className="block text-xs mb-1">Maksimum Tur</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       className={`input w-full bg-black/30 border-neutral-700 text-neutral-100 ${isInfiniteMode ? 'opacity-50' : ''}`}
-                      value={maxDebateRounds} 
+                      value={maxDebateRounds}
                       onChange={(e) => setMaxDebateRounds(parseInt(e.target.value) || 10)}
                       min="1"
                       max="50"
@@ -425,8 +582,8 @@ export default function App() {
                   </div>
                   <div className="flex flex-col justify-end">
                     <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={isInfiniteMode}
                         onChange={(e) => setIsInfiniteMode(e.target.checked)}
                         className="w-4 h-4 text-purple-600 bg-black/30 border-neutral-700 rounded focus:ring-purple-500"
@@ -437,14 +594,14 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-2 mb-3">
-                  <button 
+                  <button
                     className="btn flex-1 bg-green-600/40 border-green-500 hover:bg-green-600/60 text-white"
                     onClick={() => startDebate()}
                     disabled={isDebateRunning || !ai1Model || !ai2Model}
                   >
                     🚀 Tartışmayı Başlat
                   </button>
-                  <button 
+                  <button
                     className="btn bg-red-600/40 border-red-500 hover:bg-red-600/60 text-white"
                     onClick={stopDebate}
                     disabled={!isDebateRunning}
@@ -454,7 +611,7 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     className="btn flex-1 bg-yellow-600/40 border-yellow-500 hover:bg-yellow-600/60 text-white"
                     onClick={() => {
                       const randomTopic = getRandomTopic()
@@ -474,7 +631,7 @@ export default function App() {
           <div className="lg:col-span-2 flex flex-col h-[70vh]">
             {isDebateMode ? (
               // Tartışma Modu Arayüzü
-              <motion.div 
+              <motion.div
                 className="flex-1 overflow-auto space-y-3 p-2 border border-neutral-700 rounded-md bg-black/30"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -486,7 +643,7 @@ export default function App() {
                     <div>AI modelleri seçip tartışmayı başlatın</div>
                   </div>
                 )}
-                
+
                 {debateHistory.map((m, idx) => (
                   <div key={idx} className="space-y-2">
                     {m.speaker === 'system' ? (
@@ -497,11 +654,10 @@ export default function App() {
                       </div>
                     ) : (
                       <div className={`flex ${m.speaker === 'ai1' ? 'justify-start' : 'justify-end'}`}>
-                        <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                          m.speaker === 'ai1' 
-                            ? 'bg-blue-600/20 border border-blue-500/30 text-blue-100' 
-                            : 'bg-red-600/20 border border-red-500/30 text-red-100'
-                        }`}>
+                        <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${m.speaker === 'ai1'
+                          ? 'bg-blue-600/20 border border-blue-500/30 text-blue-100'
+                          : 'bg-red-600/20 border border-red-500/30 text-red-100'
+                          }`}>
                           <div className="text-xs font-semibold mb-1 opacity-70">
                             {m.speakerName} ({m.speaker === 'ai1' ? ai1Model : ai2Model})
                           </div>
@@ -511,7 +667,7 @@ export default function App() {
                     )}
                   </div>
                 ))}
-                
+
                 {isDebateRunning && (
                   <div className="text-center">
                     <div className="inline-flex items-center gap-2 bg-yellow-600/20 border border-yellow-500/30 rounded-lg px-4 py-2">
@@ -522,12 +678,12 @@ export default function App() {
                     </div>
                   </div>
                 )}
-                
+
                 <div ref={endRef} />
               </motion.div>
             ) : (
               // Normal Sohbet Modu
-              <motion.div 
+              <motion.div
                 className="flex-1 overflow-auto space-y-3 p-2 border border-neutral-700 rounded-md bg-black/30"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -556,17 +712,34 @@ export default function App() {
                 <div className="mt-3">
                   <PromptBox onSubmitMessage={(text) => {
                     if (text && text.trim()) {
+                      // Validation kontrolü
+                      if (!model) {
+                        alert('Lütfen bir model seçin!')
+                        return
+                      }
+                      
+                      if (chatProvider !== 'ollama' && !chatApiKey) {
+                        alert('API Key girin!')
+                        return
+                      }
+                      
+                      if (chatProvider === 'ollama' && (!serverIp || !serverPort)) {
+                        alert('Ollama için IP ve Port girin!')
+                        return
+                      }
+
                       const userMessage = { role: 'user', content: text.trim() }
                       setChatHistory((prev) => [...prev, userMessage])
                       setIsLoading(true)
 
-                      // Direkt mesajı gönder
-                      const activeModel = model || availableModels[0] || ''
+                      // Mesajı gönder
                       axios.post(`${BACKEND_BASE_URL}/api/chat`, {
                         ip: serverIp,
                         port: serverPort,
-                        model: activeModel,
+                        model: model,
                         prompt: text.trim(),
+                        provider: chatProvider,
+                        apiKey: chatApiKey
                       }).then(res => {
                         const assistantText = res?.data?.response || ''
                         setChatHistory((prev) => [...prev, { role: 'assistant', content: assistantText }])
@@ -588,7 +761,7 @@ export default function App() {
             {isDebateMode && (
               <div className="mt-3">
                 <div className="flex gap-2">
-                  <input 
+                  <input
                     className="input flex-1 bg-black/30 border-neutral-700 text-neutral-100 placeholder-neutral-500"
                     placeholder="Tartışma konusu girin (opsiyonel)"
                     onKeyDown={(e) => {
@@ -598,7 +771,7 @@ export default function App() {
                       }
                     }}
                   />
-                  <button 
+                  <button
                     className="btn bg-green-600/40 border-green-500 hover:bg-green-600/60 text-white"
                     onClick={() => {
                       const input = document.querySelector('input[placeholder*="Tartışma konusu"]')
@@ -612,8 +785,8 @@ export default function App() {
                   </button>
                 </div>
                 <div className="mt-2 text-xs text-neutral-400">
-                  {isDebateRunning ? 
-                    `Tartışma aktif: ${debateRounds}${isInfiniteMode ? ' (Sonsuz mod)' : `/${maxDebateRounds}`} tur` : 
+                  {isDebateRunning ?
+                    `Tartışma aktif: ${debateRounds}${isInfiniteMode ? ' (Sonsuz mod)' : `/${maxDebateRounds}`} tur` :
                     'Konu girmezseniz varsayılan konu kullanılır'
                   }
                 </div>
